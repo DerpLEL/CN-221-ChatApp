@@ -16,7 +16,7 @@ def register(message, cSock):
     cur = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""")
     row = cur.fetchone()
 
-    if row == None:
+    if not row:
         conn.execute(f"""INSERT INTO USER(USERNAME, PASSWORD, PORT, ONLINE)
                          VALUES("{message["user"]}", "{message["password"]}", -1, -1);""")
         conn.commit()
@@ -25,6 +25,26 @@ def register(message, cSock):
     else:
         cSock.send("Exist".encode())
         print(f"Failed to register new user.")
+
+    conn.close()
+
+def login(message, cSock):
+    conn = sqlite3.connect("database.db")
+
+    cur = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""")
+    row = cur.fetchone()
+
+    if not row:
+        cSock.send("Exist".encode())
+        print("No such account in database.")
+
+    elif row[1] != message["password"]:
+        cSock.send("Incorrect".encode())
+        print('Incorrect password entered.')
+
+    else:
+        cSock.send("Affirm".encode())
+        print(f'User {message["user"]} has logged in.')
 
     conn.close()
 
@@ -46,7 +66,9 @@ while True:
         t.start()
 
     elif data["type"] == "login":
-        print()
+        t = Thread(target=login, args=(data, cSock,))
+        t.start()
+
     elif data["type"] == "logout":
         print()
     elif data["type"] == "addf":

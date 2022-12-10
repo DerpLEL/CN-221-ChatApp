@@ -10,7 +10,7 @@ from register import Ui_Frame as regFrame
 import pickle
 
 currport = 5000
-curusr = ""
+currusr = ""
 
 class registerWindow(QMainWindow, regFrame):
     def __init__(self, parent=None):
@@ -29,7 +29,7 @@ class registerWindow(QMainWindow, regFrame):
 
     def regchecksend(self):
         if self.usr == "" or self.p1 == "" or self.p2 == "" or self.p1 != self.p2:
-            mg = QMessageBox.critical(self, "Error", "Invalid credentials, please try again.")
+            mg = QMessageBox.critical(self, "Error", "All fields are required and the passwords entered must match.")
         else:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -73,16 +73,45 @@ class window(QMainWindow, loginFrame):
         self.setupUi(self)
         self.setWindowTitle("Login")
 
-        self.pushButton_2.clicked.connect(self.getmainwin)
+        self.pushButton_2.clicked.connect(self.loginmain)
         self.pushButton.clicked.connect(self.openreg)
 
         self.lineEdit.editingFinished.connect(self.setusrname)
         self.lineEdit_2.editingFinished.connect(self.setpass)
 
-    def getmainwin(self):
-        self.newWin = MainWin()
-        self.newWin.show()
-        self.close()
+    def loginmain(self):
+        if self.usr == "" or self.passw == "":
+            mg = QMessageBox.critical(self, "Error", "All fields are required.")
+        else:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                s.connect(("127.0.0.1", 15000))
+            except Exception:
+                mg = QMessageBox.critical(self, "Error", "Can't connect to server, please try again later.")
+                return
+
+            message = dict()
+            message["type"] = "login"
+            message["user"] = self.usr
+            message["password"] = self.passw
+
+            msg = pickle.dumps(message)
+            msg = bytes(f"{len(msg):<{10}}", "utf-8") + msg
+            s.send(msg)
+
+            rep = s.recv(1024).decode()
+            if rep == "Affirm":
+                mg = QMessageBox.information(self, "Success", "Login success.")
+                currusr = self.usr
+                self.mainmenu = MainWin()
+                self.mainmenu.show()
+                self.close()
+            elif rep == "Exist":
+                mg = QMessageBox.critical(self, "Error", "Account does not exist, please register.")
+            else:
+                mg = QMessageBox.critical(self, "Error", "Incorrect password.")
+
+            s.close()
 
     def openreg(self):
         self.regWin = registerWindow()
@@ -130,11 +159,7 @@ class updateThread(QtCore.QThread):
             self.sleep(15)
 
 
-
-def window1():
-    app = QApplication(sys.argv)
-    win = window()
-    win.show()
-    sys.exit(app.exec_())
-
-window1()
+app = QApplication(sys.argv)
+win = window()
+win.show()
+sys.exit(app.exec_())
