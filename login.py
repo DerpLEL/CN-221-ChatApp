@@ -60,3 +60,6 @@ class Ui_Frame(object):
         self.label_2.setText(_translate("Frame", "Password"))
         self.pushButton.setText(_translate("Frame", "Register"))
         self.pushButton_2.setText(_translate("Frame", "Login"))
+
+    def test(self):
+        print(f"test")
