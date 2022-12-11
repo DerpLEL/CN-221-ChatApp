@@ -44,7 +44,7 @@ class registerWindow(QMainWindow, regFrame):
             message["password"] = self.p1
 
             msg = pickle.dumps(message)
-            msg = bytes(f"{len(msg):<{10}}", "utf-8") + msg
+            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
             s.send(msg)
 
             rep = s.recv(1024).decode()
@@ -94,15 +94,18 @@ class window(QMainWindow, loginFrame):
             message["type"] = "login"
             message["user"] = self.usr
             message["password"] = self.passw
+            message["port"] = currport
 
             msg = pickle.dumps(message)
-            msg = bytes(f"{len(msg):<{10}}", "utf-8") + msg
+            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
             s.send(msg)
 
             rep = s.recv(1024).decode()
             if rep == "Affirm":
                 mg = QMessageBox.information(self, "Success", "Login success.")
+                global currusr
                 currusr = self.usr
+
                 self.mainmenu = MainWin()
                 self.mainmenu.show()
                 self.close()
@@ -128,11 +131,12 @@ class MainWin(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        list1 = self.listWidget
         self.setWindowTitle("Main Menu")
-        list1.addItem(QListWidgetItem("Client 1"))
-        list1.addItem(QListWidgetItem("Client 2"))
-        list1.itemActivated.connect(self.doubleclicked)
+
+        self.listWidget.addItem(QListWidgetItem("Client 1"))
+        self.listWidget.addItem(QListWidgetItem("Client 2"))
+        self.listWidget.itemActivated.connect(self.doubleclicked)
+        self.actionExit.triggered.connect(self.logout)
 
         self.updT = updateThread(self)
         self.updT.updateSignal.connect(self.updatelist)
@@ -146,17 +150,43 @@ class MainWin(QMainWindow, Ui_MainWindow):
         for item in items:
             self.listWidget.addItem(QListWidgetItem(item))
 
+    def logout(self):
+        message = dict()
+        message['type'] = 'logout'
+        message['user'] = currusr
+
+        msg = pickle.dumps(message)
+        msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("127.0.0.1", 15000))
+        s.send(msg)
+
+        s.close()
+        mg = QMessageBox.information(self, "Logout", "Successfully logged out.")
+
+        self.loginWin = window()
+        self.loginWin.show()
+
+        self.updT.stop()
+        self.close()
+
 
 class updateThread(QtCore.QThread):
     updateSignal = QtCore.pyqtSignal(list)
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.active = True
 
     def run(self):
-        while True:
+        while self.active:
             items = ["Client 1", "Client 2", "Client 3", "Client 4"]
             self.updateSignal.emit(items)
             self.sleep(15)
+
+    def stop(self):
+        self.active = False
+        self.wait()
 
 
 app = QApplication(sys.argv)

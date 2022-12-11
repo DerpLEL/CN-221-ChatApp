@@ -44,8 +44,23 @@ def login(message, cSock):
 
     else:
         cSock.send("Affirm".encode())
+
+        conn.execute(f"""UPDATE USER set PORT = {message["port"]} where USERNAME = "{message["user"]}";""")
+        conn.execute(f"""UPDATE USER set ONLINE = 1 where USERNAME = "{message["user"]}";""")
+        conn.commit()
+
         print(f'User {message["user"]} has logged in.')
 
+    conn.close()
+
+def logout(message, cSock):
+    conn = sqlite3.connect("database.db")
+
+    conn.execute(f"""UPDATE USER set PORT = -1 where USERNAME = "{message["user"]}";""")
+    conn.execute(f"""UPDATE USER set ONLINE = -1 where USERNAME = "{message["user"]}";""")
+    conn.commit()
+
+    print(f"User {message['user']} has logged out.")
     conn.close()
 
 s = socket.socket()
@@ -70,7 +85,9 @@ while True:
         t.start()
 
     elif data["type"] == "logout":
-        print()
+        t = Thread(target=logout, args=(data, cSock,))
+        t.start()
+
     elif data["type"] == "addf":
         print()
     elif data["type"] == "getpub":

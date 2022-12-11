@@ -61,4 +61,4 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Public"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_2), _translate("MainWindow", "Friends"))
         self.menuMenu.setTitle(_translate("MainWindow", "Menu"))
-        self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionExit.setText(_translate("MainWindow", "Logout"))
