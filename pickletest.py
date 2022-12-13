@@ -2,7 +2,10 @@ import socket
 import pickle
 import sqlite3
 
-msg = "lmao gg bruh bruh"
-msg = bytes(f"{len(msg):<10}", "utf-8")
+conn = sqlite3.connect("database.db")
 
-print(msg)
+cur = conn.execute("SELECT * from USER")
+
+print(cur.fetchall())
+
+conn.close()

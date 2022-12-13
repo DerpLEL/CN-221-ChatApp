@@ -13,8 +13,7 @@ def getData(cSock):
 def register(message, cSock):
     conn = sqlite3.connect("database.db")
 
-    cur = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""")
-    row = cur.fetchone()
+    row = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""").fetchone()
 
     if not row:
         conn.execute(f"""INSERT INTO USER(USERNAME, PASSWORD, PORT, ONLINE)
@@ -31,16 +30,15 @@ def register(message, cSock):
 def login(message, cSock):
     conn = sqlite3.connect("database.db")
 
-    cur = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""")
-    row = cur.fetchone()
+    row = conn.execute(f"""SELECT * from USER where USERNAME = "{message['user']}";""").fetchone()
 
     if not row:
         cSock.send("Exist".encode())
-        print("No such account in database.")
+        print(f"Account user {message['user']} in database.")
 
     elif row[1] != message["password"]:
         cSock.send("Incorrect".encode())
-        print('Incorrect password entered.')
+        print(f'Incorrect password for {message["user"]} entered.')
 
     else:
         cSock.send("Affirm".encode())
@@ -62,6 +60,23 @@ def logout(message, cSock):
 
     print(f"User {message['user']} has logged out.")
     conn.close()
+
+def getpub(message, cSock):
+    conn = sqlite3.connect("database.db")
+
+    clnlist = list()
+
+    cur = conn.execute("SELECT USERNAME, PORT from USER where ONLINE = 1").fetchall()
+
+    for row in cur:
+        clnlist.append((row[0], row[1]))
+
+    msg = pickle.dumps(clnlist)
+    msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+    cSock.send(msg)
+
+    conn.close()
+
 
 s = socket.socket()
 
@@ -91,4 +106,8 @@ while True:
     elif data["type"] == "addf":
         print()
     elif data["type"] == "getpub":
+        t = Thread(target=getpub, args=(data, cSock,))
+        t.start()
+
+    elif data["type"] == "getf":
         print()

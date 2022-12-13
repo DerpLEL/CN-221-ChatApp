@@ -11,6 +11,12 @@ import pickle
 currport = 5000
 currusr = ""
 
+def getData(sock):
+    length_header = sock.recv(10)
+    data_length = int(length_header.decode("utf-8").strip())
+    msg = sock.recv(data_length)
+    return pickle.loads(msg)
+
 class registerWindow(QMainWindow, regFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -135,6 +141,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
+        self.clnlist = []
         self.setWindowTitle("Main Menu")
 
         self.listWidget.addItem(QListWidgetItem("Client 1"))
@@ -150,9 +157,11 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.listWidget.clear()
 
     def updatelist(self, items):
+        self.clnlist = items
+
         self.listWidget.clear()
         for item in items:
-            self.listWidget.addItem(QListWidgetItem(item))
+            self.listWidget.addItem(QListWidgetItem(item[0]))
 
     def logout(self):
         message = dict()
@@ -184,7 +193,23 @@ class updateThread(QtCore.QThread):
 
     def run(self):
         while self.active:
-            items = ["Client 1", "Client 2", "Client 3", "Client 4"]
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                s.connect(("127.0.0.1", 15000))
+            except Exception:
+                mg = QMessageBox.critical(None, "Error", "Can't connect to server, please try again later.")
+                self.active = False
+                return
+
+            message = dict()
+            message['type'] = "getpub"
+
+            msg = pickle.dumps(message)
+            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+            s.send(msg)
+
+            items = getData(s)
+
             self.updateSignal.emit(items)
             self.sleep(5)
 
