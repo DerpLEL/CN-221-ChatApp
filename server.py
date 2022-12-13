@@ -40,6 +40,10 @@ def login(message, cSock):
         cSock.send("Incorrect".encode())
         print(f'Incorrect password for {message["user"]} entered.')
 
+    elif row[3] == 1:
+        cSock.send("Relog".encode())
+        print(f'Already logged in user {message["user"]} attempting to log in again.')
+
     else:
         cSock.send("Affirm".encode())
 

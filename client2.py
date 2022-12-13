@@ -121,6 +121,8 @@ class window(QMainWindow, loginFrame):
                 self.close()
             elif rep == "Exist":
                 mg = QMessageBox.critical(self, "Error", "Account does not exist, please register.")
+            elif rep == "Relog":
+                mg = QMessageBox.critical(self, "Error", "Account already logged in. Please log out before logging in again.")
             else:
                 mg = QMessageBox.critical(self, "Error", "Incorrect password.")
 
@@ -142,7 +144,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.clnlist = []
-        self.setWindowTitle("Main Menu")
+        self.setWindowTitle(f"Logged in as {currusr}")
 
         self.listWidget.addItem(QListWidgetItem("Client 1"))
         self.listWidget.addItem(QListWidgetItem("Client 2"))

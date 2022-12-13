@@ -4,8 +4,7 @@ import sqlite3
 
 conn = sqlite3.connect("database.db")
 
-cur = conn.execute("SELECT * from USER")
-
-print(cur.fetchall())
+conn.execute('UPDATE USER set ONLINE = -1 where USERNAME = "admin"')
+conn.commit()
 
 conn.close()
