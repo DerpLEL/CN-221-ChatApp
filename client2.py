@@ -8,7 +8,7 @@ from mainInterface import Ui_MainWindow
 from register import Ui_Frame as regFrame
 import pickle
 
-currport = 5000
+currport = 5001
 currusr = ""
 
 def getData(sock):
@@ -143,7 +143,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
-        self.clnlist = []
+        self.clnlist = list()
         self.setWindowTitle(f"Logged in as {currusr}")
 
         self.listWidget.addItem(QListWidgetItem("Client 1"))
@@ -159,10 +159,11 @@ class MainWin(QMainWindow, Ui_MainWindow):
         self.listWidget.clear()
 
     def updatelist(self, items):
+        items = [x for x in items if x[0] != currusr]
         self.clnlist = items
 
         self.listWidget.clear()
-        for item in items:
+        for item in self.clnlist:
             self.listWidget.addItem(QListWidgetItem(item[0]))
 
     def logout(self):
