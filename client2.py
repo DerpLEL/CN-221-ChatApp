@@ -162,6 +162,7 @@ class MainWin(QMainWindow, Ui_MainWindow):
         items = [x for x in items if x[0] != currusr]
         self.clnlist = items
 
+        # Where commit
         self.listWidget.clear()
         for item in self.clnlist:
             self.listWidget.addItem(QListWidgetItem(item[0]))
