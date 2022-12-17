@@ -94,6 +94,44 @@ def getpub(message, cSock):
     conn.close()
 
 
+def addf(message, cSock):
+    conn = sqlite3.connect("database.db")
+    cur = conn.execute(f"""SELECT FR FROM FRIEND where USERNAME = "{message['user']}";""").fetchall()
+
+    if not cur:
+        conn.execute(f"""INSERT INTO FRIEND(USERNAME, FR)
+                    VALUES("{message['user']}", "{message['friend']}");""")
+        conn.commit()
+        print(f'{message["user"]} has added friend {message["friend"]}')
+    else:
+        cur = conn.execute(f"""SELECT FR FROM FRIEND where USERNAME = "{message['user']}" and FR = "{message['friend']}";""").fetchall()
+
+        if not cur:
+            conn.execute(f"""INSERT INTO FRIEND(USERNAME, FR)
+                                VALUES("{message['user']}", "{message['friend']}");""")
+            conn.commit()
+            print(f'{message["user"]} has added friend {message["friend"]}')
+        else:
+            print(f"{message['user']} already added {message['friend']}")
+
+    conn.close()
+
+def getf(message, cSock):
+    conn = sqlite3.connect("database.db")
+
+    clnlist = list()
+
+    cur = conn.execute(f"""SELECT USERNAME, PORT FROM USER INNER JOIN (SELECT FR FROM FRIEND where USERNAME = "{message['user']}") as t1 WHERE USERNAME = FR and PORT != -1;""").fetchall()
+
+    for row in cur:
+        clnlist.append((row[0], row[1]))
+
+    msg = pickle.dumps(clnlist)
+    msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+    cSock.send(msg)
+
+    conn.close()
+
 s = socket.socket()
 
 host = "0.0.0.0"
@@ -120,11 +158,13 @@ while True:
         t.start()
 
     elif data["type"] == "addf":
-        print()
+        t = Thread(target=addf, args=(data, cSock,))
+        t.start()
 
     elif data["type"] == "getpub":
         t = Thread(target=getpub, args=(data, cSock,))
         t.start()
 
     elif data["type"] == "getf":
-        print()
+        t = Thread(target=getf, args=(data, cSock,))
+        t.start()
