@@ -155,9 +155,11 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.clnlist = list()
+        self.clnlist2 = list()
         self.setWindowTitle(f"Logged in as {currusr}")
 
         self.listWidget.itemActivated.connect(self.doubleclicked)
+        self.listWidget_2.itemActivated.connect(self.doubleclicked)
         self.actionExit.triggered.connect(self.logout)
 
         self.updT = updateThread(self)
@@ -168,13 +170,17 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listenner.updateSignal.connect(self.connRecv)
         self.listenner.start()
 
+        self.updTFR = updateThreadFR(self)
+        self.updTFR.updateSignal.connect(self.updatelistFR)
+        self.updTFR.start()
+
     def doubleclicked(self, item):
         target = [x for x in self.clnlist if x[0] == item.data(1)]
         targetPort = target[0][1]
 
-        #if targetPort in connected:
-            #msg = QMessageBox.critical(None, "Error", "You are already connected to this user.")
-            #return
+        if item.data(1) in connected:
+            msg = QMessageBox.critical(None, "Error", "You are already connected to this user.")
+            return
 
         print(f"Connecting to 127.0.0.1:{targetPort}")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -186,16 +192,17 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
 
         print("Opening chat window...")
         s.sendall(currusr.encode())
+        connected.append(item.data(1))
 
         self.newChat = chatWin(None, s, item.data(1))
         self.newChat.show()
 
     def connRecv(self, cSock):
         name = cSock.recv(1024).decode()
+        connected.append(name)
 
         self.chatWindow = chatWin(None, cSock, name)
         self.chatWindow.show()
-
 
     def updatelist(self, items):
         items = [x for x in items if x[0] != currusr]
@@ -206,6 +213,15 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
             listItem = QListWidgetItem(item[0])
             listItem.setData(1, item[0])
             self.listWidget.addItem(listItem)
+
+    def updatelistFR(self, items):
+        self.clnlist2 = items
+        self.listWidget_2.clear()
+
+        for item in self.clnlist2:
+            listItem = QListWidgetItem(item[0])
+            listItem.setData(1, item[0])
+            self.listWidget_2.addItem(listItem)
 
     def logout(self):
         message = dict()
@@ -226,6 +242,7 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         self.loginWin.show()
 
         self.updT.stop()
+        self.updTFR.stop()
         self.listenner.stop()
         self.close()
 
@@ -245,19 +262,43 @@ class chatWin(QtWidgets.QMainWindow, chatFrame):
         self.active = True
 
         self.lineEdit.returnPressed.connect(self.sendMsg)
+        self.pushButton.clicked.connect(self.addfriend)
 
         t = Thread(target=self.listenmsg)
         t.start()
 
     def listenmsg(self):
         while self.active:
-            msg = self.targetSock.recv(1024).decode()
+            try:
+                msg = self.targetSock.recv(1024).decode()
+            except Exception:
+                self.updateText("The other user terminated the connection, you may close this window.")
+                break
 
             msg = f">> {self.peer}: " + msg
             self.updateText(msg)
 
     def updateText(self, txt):
         self.textBrowser.append(txt)
+
+    def addfriend(self):
+        s = socket.socket()
+        try:
+            s.connect(("127.0.0.1", 15000))
+        except Exception:
+            mg = QMessageBox.critical(self, "Error", "Can't connect to server, please try again later.")
+            return
+
+        message = dict()
+        message['type'] = "addf"
+        message['user'] = currusr
+        message['friend'] = self.peer
+
+        msg = pickle.dumps(message)
+        msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+        s.send(msg)
+
+        s.close()
 
     def sendMsg(self):
         self.setmsg()
@@ -275,8 +316,8 @@ class chatWin(QtWidgets.QMainWindow, chatFrame):
 
     def closesession(self):
         self.targetSock.close()
+        connected.remove(self.peer)
 
-        self.close()
     def closeEvent(self, event):
         self.closesession()
 
@@ -299,6 +340,40 @@ class updateThread(QtCore.QThread):
             message = dict()
             message['type'] = "getpub"
             message['user'] = "ALL"
+
+            msg = pickle.dumps(message)
+            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+            s.send(msg)
+
+            items = getData(s)
+
+            self.updateSignal.emit(items)
+            self.sleep(5)
+
+    def stop(self):
+        self.active = False
+        self.wait()
+
+
+class updateThreadFR(QtCore.QThread):
+    updateSignal = QtCore.pyqtSignal(list)
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.active = True
+
+    def run(self):
+        while self.active:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                s.connect(("127.0.0.1", 15000))
+            except Exception:
+                mg = QMessageBox.critical(None, "Error", "Can't connect to server, please try again later.")
+                self.active = False
+                return
+
+            message = dict()
+            message['type'] = "getf"
+            message['user'] = currusr
 
             msg = pickle.dumps(message)
             msg = bytes(f"{len(msg):<10}", "utf-8") + msg
