@@ -10,7 +10,7 @@ from register import Ui_Frame as regFrame
 from threading import Thread
 import pickle
 
-currport = 5001
+currport = 6000
 currusr = ""
 
 connected = []

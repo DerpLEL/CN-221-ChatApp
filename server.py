@@ -85,7 +85,11 @@ def getpub(message, cSock):
 
         if cur:
             for row in cur:
-                print()
+                clnlist.append((row[0], row[1]))
+
+            msg = pickle.dumps(clnlist)
+            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+            cSock.send(msg)
 
     conn.close()
 

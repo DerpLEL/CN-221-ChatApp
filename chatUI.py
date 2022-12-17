@@ -69,3 +69,33 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Group list"))
         self.menuLogout.setTitle(_translate("MainWindow", "Menu"))
         self.actionLogout.setText(_translate("MainWindow", "Logout"))
+
+"""self.queryReq = ""
+        self.setWindowTitle(f"Logged in as {currusr}")
+
+        #self.FriendList.itemClicked.connect(self.test)
+        #self.FriendList.addItem(QListWidgetItem("Placeholder"))
+        self.actionLogout.triggered.connect(self.logout)
+
+        self.search_friend_box.editingFinished.connect(self.setreq)
+        self.find_friend_button.clicked.connect(self.openResWindow)
+
+        #self.updT = updateThread(self)
+        #self.updT.updateSignal.connect(self.updatelist)
+        #self.updT.start()
+    def test(self, item):
+        print(item)
+    def openResWindow(self):
+        self.resWin = searchWindow(None, self.queryReq)
+        self.resWin.show()
+
+    def setreq(self):
+        self.queryReq = self.search_friend_box.text()
+    def updatelist(self, items):
+        items = [x for x in items if x[0] != currusr]
+        self.clnlist = items
+
+        # Where commit
+        self.FriendList.clear()
+        for item in self.clnlist:
+            self.FriendList.addItem(QListWidgetItem(item[0]))"""
