@@ -80,17 +80,6 @@ def getpub(message, cSock):
         msg = bytes(f"{len(msg):<10}", "utf-8") + msg
         cSock.send(msg)
 
-    else:
-        cur = conn.execute(f"""SELECT USERNAME, PORT from USER where ONLINE = 1 AND USERNAME = {message['user']}""").fetchall()
-
-        if cur:
-            for row in cur:
-                clnlist.append((row[0], row[1]))
-
-            msg = pickle.dumps(clnlist)
-            msg = bytes(f"{len(msg):<10}", "utf-8") + msg
-            cSock.send(msg)
-
     conn.close()
 
 
