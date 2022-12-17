@@ -70,14 +70,22 @@ def getpub(message, cSock):
 
     clnlist = list()
 
-    cur = conn.execute("SELECT USERNAME, PORT from USER where ONLINE = 1").fetchall()
+    if message['user'] == "ALL":
+        cur = conn.execute("SELECT USERNAME, PORT from USER where ONLINE = 1").fetchall()
 
-    for row in cur:
-        clnlist.append((row[0], row[1]))
+        for row in cur:
+            clnlist.append((row[0], row[1]))
 
-    msg = pickle.dumps(clnlist)
-    msg = bytes(f"{len(msg):<10}", "utf-8") + msg
-    cSock.send(msg)
+        msg = pickle.dumps(clnlist)
+        msg = bytes(f"{len(msg):<10}", "utf-8") + msg
+        cSock.send(msg)
+
+    else:
+        cur = conn.execute(f"""SELECT USERNAME, PORT from USER where ONLINE = 1 AND USERNAME = {message['user']}""").fetchall()
+
+        if cur:
+            for row in cur:
+                print()
 
     conn.close()
 
@@ -109,6 +117,7 @@ while True:
 
     elif data["type"] == "addf":
         print()
+
     elif data["type"] == "getpub":
         t = Thread(target=getpub, args=(data, cSock,))
         t.start()

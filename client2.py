@@ -4,8 +4,9 @@ import sys
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import *
 from login import Ui_Frame as loginFrame
-from mainInterface import Ui_MainWindow
+from chatUI import Ui_MainWindow
 from register import Ui_Frame as regFrame
+from searchRes import Ui_MainWindow as searchUI
 import pickle
 
 currport = 5001
@@ -138,34 +139,63 @@ class window(QMainWindow, loginFrame):
     def setpass(self):
         self.passw = self.lineEdit_2.text()
 
+class searchWindow(QMainWindow, searchUI):
+    def __init__(self, parent=None, req="ALL"):
+        super().__init__(parent, req)
+        self.setupUi(self)
+
+        message = dict()
+        message['type'] = "getpub"
+        message['user'] = req
+
+        msg = pickle.dumps(message)
+        msg = bytes(f"{len(msg):<10}", "utf-8") + bytes
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("127.0.0.1", 15000))
+        s.send(msg)
+
+        clnlist = getData(s)
+
+
+
+    def getConn(self):
+        print()
 
 class MainWin(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setupUi(self)
         self.clnlist = list()
+        self.queryReq = ""
         self.setWindowTitle(f"Logged in as {currusr}")
 
-        self.listWidget.addItem(QListWidgetItem("Client 1"))
-        self.listWidget.addItem(QListWidgetItem("Client 2"))
-        self.listWidget.itemActivated.connect(self.doubleclicked)
-        self.actionExit.triggered.connect(self.logout)
+        self.FriendList.itemActivated.connect(self.doubleclicked)
+        self.actionLogout.triggered.connect(self.logout)
+        self.search_friend_box.editingFinished.connect(self.setreq)
+        self.find_friend_button.clicked.connect(self.openResWindow)
 
         self.updT = updateThread(self)
         self.updT.updateSignal.connect(self.updatelist)
         self.updT.start()
 
     def doubleclicked(self):
-        self.listWidget.clear()
+        self.FriendList.clear()
 
+    def openResWindow(self):
+        self.resWin = searchWindow(None, self.queryReq)
+        self.resWin.show()
+
+    def setreq(self):
+        self.queryReq = self.search_friend_box.text()
     def updatelist(self, items):
         items = [x for x in items if x[0] != currusr]
         self.clnlist = items
 
         # Where commit
-        self.listWidget.clear()
+        self.FriendList.clear()
         for item in self.clnlist:
-            self.listWidget.addItem(QListWidgetItem(item[0]))
+            self.FriendList.addItem(QListWidgetItem(item[0]))
 
     def logout(self):
         message = dict()
