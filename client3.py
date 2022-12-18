@@ -331,6 +331,9 @@ class updateThread(QtCore.QThread):
                 s.connect(("127.0.0.1", 15000))
             except Exception:
                 self.updateSignal.emit([])
+                self.sleep(5)
+
+                s.close()
                 continue
 
             message = dict()
@@ -364,6 +367,9 @@ class updateThreadFR(QtCore.QThread):
                 s.connect(("127.0.0.1", 15000))
             except Exception:
                 self.updateSignal.emit([])
+                self.sleep(5)
+
+                s.close()
                 continue
 
             message = dict()
