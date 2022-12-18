@@ -330,9 +330,8 @@ class updateThread(QtCore.QThread):
             try:
                 s.connect(("127.0.0.1", 15000))
             except Exception:
-                mg = QMessageBox.critical(None, "Error", "Can't connect to server, please try again later.")
-                self.active = False
-                return
+                self.updateSignal.emit([])
+                continue
 
             message = dict()
             message['type'] = "getpub"
@@ -364,9 +363,8 @@ class updateThreadFR(QtCore.QThread):
             try:
                 s.connect(("127.0.0.1", 15000))
             except Exception:
-                mg = QMessageBox.critical(None, "Error", "Can't connect to server, please try again later.")
-                self.active = False
-                return
+                self.updateSignal.emit([])
+                continue
 
             message = dict()
             message['type'] = "getf"
