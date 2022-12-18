@@ -238,9 +238,6 @@ class MainWin(QtWidgets.QMainWindow, Ui_MainWindow):
         s.close()
         mg = QMessageBox.information(self, "Logout", "Successfully logged out.")
 
-        self.loginWin = window()
-        self.loginWin.show()
-
         self.updT.stop()
         self.updTFR.stop()
         self.listenner.stop()
